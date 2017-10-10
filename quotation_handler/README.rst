@@ -16,4 +16,4 @@ Features
 
 Credits
 =======
-Nikhil Krishnan @ cybrosys, nikhil@cybrosys.in
+Ashwin Sarathy @ Yobi
