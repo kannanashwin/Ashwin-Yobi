@@ -1,0 +1,39 @@
+Changes made on Product.Template.py
+
+## For Detailed  Description By Tamil
+    description_detailed = fields.Text(
+        'Detailed Description', translate=True,help="A Detailed description of the Product" )
+    ## End
+#############################################################################################################
+Change made in Odoo-->User Interface-->Views-->Product.common.form-->under Notes Tag .:
+ 
+<page string="Detailed Description" name="detail description">
+                            <group name="description">
+                                <separator string="Detailed Description for This Product and Quotations" />
+                                <field name="description_detailed" colspan="4" nolabel="1" placeholder="This Detailed Description will be displayed on the quotations."/>
+                            </group>
+                         </page>
+						 
+###############################################################################################################
+Changes made inside quotation report:
+
+ <p style="page-break-after:always;">   </p>
+   <div t-if="doc.product_id" class="col-xs-3">
+                    <strong>Description in Details</strong>
+                    <p t-field="doc.product_id.product_tmpl_id.name"/>
+                    <span t-field="doc.product_id.product_tmpl_id.description_detailed"/>
+                </div>
+################################################################################################################
+						 
+<div t-if="doc.product_id" class="col-xs-3">
+                    <strong>Description in Details</strong>
+                    <p t-field="doc.product_id.product_tmpl_id.name"/>
+                    <span t-field="doc.product_id.product_tmpl_id.description_detailed"/>
+                </div>
+
+				
+				<div class="col-xs-5 col-xs-offset-1">
+                    <div t-field="doc.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
+                </div>
+            </div>
+###################################################################################################################

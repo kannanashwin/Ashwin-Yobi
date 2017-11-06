@@ -1,0 +1,85 @@
+The following functions and triggers are adding the CC recipient as follower of mail message
+
+###########Step 1 create staging tables for many2many ##########
+!!!!!!!!!!!!!! Run O N L Y   O N E   T I M E !!!!!!!!!!!!!!
+
+ 
+CREATE TABLE public.temp_msg_ptcc_rel
+(
+    mailid integer,
+    partner_id integer
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public.temp_msg_ptcc_rel;
+    OWNER to odoo;
+    
+   
+    CREATE TABLE public.temp_follo
+(
+    res_model character varying COLLATE pg_catalog."default",
+    partner_id integer,
+    channel_id integer,
+    res_id integer
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public.temp_follo
+    OWNER to postgres;
+
+
+### Step 2 create function  for population data from original table when CC recipient add in the mail;
+
+
+CREATE OR REPLACE FUNCTION ins_function() RETURNS trigger AS 
+    BEGIN
+  
+     IF tg_op = ''INSERT'' THEN
+         INSERT INTO temp_msg_ptcc_rel(mailid, partner_id)
+         VALUES (new.mailid, new.partner_id);
+     RETURN new;
+  END IF;
+  
+END
+ ' LANGUAGE plpgsql;
+
+3.  ##### Create trigger for population data from original table when CC recipient add in the mail composer
+
+CREATE TRIGGER partner_cc_ins AFTER INSERT
+        ON message_partnercc_rel FOR each ROW
+        EXECUTE PROCEDURE ins_function();
+
+4. #### create function for adding CC recipient to mail_followers ###
+   CREATE OR REPLACE FUNCTION fun_ccfollow() RETURNS trigger AS
+    $BODY$    
+        BEGIN
+
+            drop table temp_follo;
+            CREATE TABLE temp_follo as select distinct mm.model as res_model,mprcc.partner_id,mm.mail_server_id as channel_id,mm.res_id as res_id
+            from
+            mail_message mm,
+            temp_msg_ptcc_rel mprcc
+            where mm.id = mprcc.mailid;
+             insert into mail_followers(res_model,partner_id,channel_id,res_id ) (select distinct  res_model,partner_id,channel_id, res_id from temp_follo where not exists (
+            select res_model,partner_id,channel_id,res_id from mail_followers
+             where temp_follo.partner_id = mail_followers.partner_id and temp_follo.res_id = mail_followers.res_id));
+              truncate table temp_msg_ptcc_rel;
+            RETURN NULL;
+          END;
+ $BODY$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+
+#### create trigger for adding CC recipient to mail_followers ###
+  CREATE TRIGGER ccfollow
+  AFTER UPDATE
+  ON mail_message
+  FOR EACH ROW
+  EXECUTE PROCEDURE fun_ccfollow();
+  
+
+############### End of Statements  #################

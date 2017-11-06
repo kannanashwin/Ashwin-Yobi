@@ -1,0 +1,48 @@
+Run the below queries using following steps :
+
+################################################################################################
+Start--> run -->services.msc
+Start/Stop the Odoo server in windows
+#################################################################################################
+
+pgadmin-->res.partner(tablename)-->execute sql arbitrary(SQL SYmBOL ON TOP) 
+
+#################################################################################################
+CREATE OR REPLACE FUNCTION fun_opportunity_count_res()
+  RETURNS trigger AS
+$BODY$
+BEGIN
+  UPDATE res_partner SET opportunity_count_res= sq.cnt
+        FROM  (
+                SELECT count(partner_id) as cnt , partner_id as p_id
+                    FROM   crm_lead
+                    WHERE partner_id IS NOT NULL
+                    GROUP  BY partner_id) AS sq
+    WHERE  id=sq.p_id;
+    RETURN NULL;
+ END;
+$BODY$ LANGUAGE plpgsql;
+
+##################################################################################################
+
+CREATE TRIGGER tr_opportunity_count_res
+  AFTER INSERT
+  ON crm_lead
+  FOR EACH ROW
+  EXECUTE PROCEDURE fun_opportunity_count_res();
+	
+##################################################################################################	
+	
+UPDATE res_partner SET opportunity_count_res= sq.cnt
+FROM  (
+   SELECT count(partner_id) as cnt , partner_id as p_id
+   FROM   crm_lead
+   WHERE partner_id IS NOT NULL
+   GROUP  BY partner_id) AS sq
+WHERE  id=sq.p_id;
+##################################################################################################
+
+Copy paste in Odoo --> crm -->res.partner 
+
+line # : 10      _order = 'opportunity_count_res DESC'
+line # : 18      opportunity_count_res =fields.Integer("Opportunity", required=True, track_visibility='onchange')
